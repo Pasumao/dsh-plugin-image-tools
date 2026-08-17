@@ -1,0 +1,61 @@
+{
+  "name": "dsh-plugin-pickimages",
+  "description": "DSH 图片/图文混合选项插件：ask_user_choice 工具让模型给用户提供带图片的选项（本地路径 / http(s) URL / base64 data URI），Web GUI 渲染图片选择卡，点击卡片可放大查看大图。纯插件实现，不改核心包。",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "scripts",
+    "cordis.patch.yml",
+    "README.md",
+    "设计说明.md"
+  ],
+  "scripts": {
+    "selfcheck": "node scripts/selfcheck.mjs",
+    "smoke": "node scripts/selfcheck.mjs && node scripts/smoke-server.mjs && node scripts/smoke-client.mjs",
+    "pack": "npm pack",
+    "prepublishOnly": "npm run smoke"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek",
+    "harness",
+    "cordis",
+    "plugin",
+    "ask",
+    "choice",
+    "image",
+    "picker"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pasumao/dsh-plugin-pickimages.git"
+  },
+  "homepage": "https://github.com/Pasumao/dsh-plugin-pickimages#readme",
+  "bugs": {
+    "url": "https://github.com/Pasumao/dsh-plugin-pickimages/issues"
+  },
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  }
+}
