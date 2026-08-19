@@ -1,5 +1,5 @@
 /**
- * dsh-plugin-pickimages 自检：对 lib/index.js 导出的纯函数做离线冒烟测试。
+ * dsh-plugin-image-tools 自检：对 lib/index.js 导出的纯函数做离线冒烟测试。
  * 运行：node scripts/selfcheck.mjs
  */
 import { strict as assert } from 'node:assert'
@@ -9,6 +9,12 @@ import {
   buildPickMarker,
   parsePickMarker,
   loadOptionImage,
+  originOf,
+  safeAlt,
+  mediaTypeToExt,
+  imagePlaceholderText,
+  extractImageTokenIds,
+  rewriteMessageImages,
   MAX_IMAGE_BYTES,
 } from '../lib/index.js'
 
@@ -20,7 +26,7 @@ async function ok(name, fn) {
 }
 
 async function main() {
-  console.log('[dsh-plugin-pickimages] selfcheck')
+  console.log('[dsh-plugin-image-tools] selfcheck')
 
   // --- sniffMediaType ---
   await ok('sniff PNG', () => {
@@ -73,6 +79,70 @@ async function main() {
     assert.equal(parsePickMarker('<!--dsh-pick:v1:broken-->'), null)
   })
 
+  // --- originOf（show_images 的绝对 URL 推导） ---
+  await ok('origin uses host/port', () => {
+    assert.equal(originOf({ webServer: { host: '127.0.0.1', port: 3080 } }), 'http://127.0.0.1:3080')
+  })
+  await ok('origin falls back for 0.0.0.0', () => {
+    assert.equal(originOf({ webServer: { host: '0.0.0.0', port: 5173 } }), 'http://127.0.0.1:5173')
+  })
+  await ok('origin tolerates missing ctx', () => {
+    assert.equal(originOf(undefined), 'http://127.0.0.1')
+    assert.equal(originOf({}), 'http://127.0.0.1')
+  })
+
+  // --- safeAlt（caption → markdown alt 安全文本） ---
+  await ok('safeAlt keeps normal caption', () => {
+    assert.equal(safeAlt('深海鲸鱼封面'), '深海鲸鱼封面')
+  })
+  await ok('safeAlt strips markdown-breaking chars', () => {
+    assert.equal(safeAlt('A]B\nC\rD'), 'A B C D')
+    assert.equal(safeAlt('   '), '图片')
+    assert.equal(safeAlt(undefined), '图片')
+  })
+
+  // --- 盲模型收图：媒体类型/占位符/token 提取/消息重写 ---
+  await ok('mediaTypeToExt maps', () => {
+    assert.equal(mediaTypeToExt('image/png'), '.png')
+    assert.equal(mediaTypeToExt('image/jpeg'), '.jpg')
+    assert.equal(mediaTypeToExt('image/webp'), '.webp')
+    assert.equal(mediaTypeToExt('image/gif'), '.gif')
+    assert.equal(mediaTypeToExt('image/bmp'), '')
+  })
+  await ok('imagePlaceholderText embeds token', () => {
+    const text = imagePlaceholderText({ attachmentId: 'abc123def456', mediaType: 'image/png', width: 10, height: 20 })
+    assert.ok(text.includes('dshimg:abc123def456'), '占位符应含 token')
+    assert.ok(text.includes('图片'), '占位符应说明是图片')
+  })
+  await ok('extractImageTokenIds finds ids', () => {
+    assert.deepEqual(extractImageTokenIds('📷 图片 dshimg:aaa111bbb222 和 dshimg:ccc333ddd444 和 dshimg:aaa111bbb222'), ['aaa111bbb222', 'ccc333ddd444'])
+    assert.deepEqual(extractImageTokenIds('没有 token'), [])
+    assert.deepEqual(extractImageTokenIds(undefined), [])
+  })
+  await ok('rewriteMessageImages replaces image block', () => {
+    const ref = { attachmentId: 'abc123def456', mediaType: 'image/png', bytes: 4, width: 10, height: 20, name: 'shot.png' }
+    const message = { id: 'm1', role: 'user', source: { kind: 'direct' }, content: [
+      { type: 'text', text: '看看这张图' },
+      { type: 'image', attachment: ref },
+    ] }
+    const rewritten = rewriteMessageImages(message)
+    assert.ok(rewritten !== null, '应返回重写后的消息')
+    assert.equal(rewritten.id, 'm1', 'id 保留')
+    assert.equal(rewritten.content.length, 2)
+    assert.equal(rewritten.content[0].type, 'text')
+    assert.equal(rewritten.content[1].type, 'text', 'image 块应变为 text 块')
+    assert.ok(rewritten.content[1].text.includes('dshimg:abc123def456'), '占位符应含 token')
+    assert.ok(Object.isFrozen(rewritten), '新消息应冻结')
+    // 原消息不被修改
+    assert.equal(message.content[1].type, 'image')
+  })
+  await ok('rewriteMessageImages leaves text-only messages alone', () => {
+    const message = { id: 'm2', role: 'user', source: { kind: 'direct' }, content: [{ type: 'text', text: 'hi' }] }
+    assert.equal(rewriteMessageImages(message), null)
+    assert.equal(rewriteMessageImages(null), null)
+    assert.equal(rewriteMessageImages({ id: 'x', content: 'not-array' }), null)
+  })
+
   // --- loadOptionImage：data URI / path（url 需要网络，跳过） ---
   await ok('load data URI', async () => {
     const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
@@ -107,7 +177,7 @@ async function main() {
     )
   })
 
-  console.log(`\n[dsh-plugin-pickimages] ${passed} checks passed`)
+  console.log(`\n[dsh-plugin-image-tools] ${passed} checks passed`)
 }
 
 main().catch((error) => {
