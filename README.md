@@ -93,33 +93,17 @@ cordis.patch.yml      bundle 补丁（挂载行）
 docs/                 效果图（README 展示用）
 ```
 
-## 安装（web profile）
+## 安装
 
 ```powershell
-# 1. 把插件 link 进 profile（已写入 package.json 时跳过这步的编辑）
-cd C:\Users\18303\.dsh\profiles\web
-pnpm install
-
-# 2. 重启 dsh（launcher），然后刷新浏览器页面
+# npm（推荐）
+dsh plugin --profile web add dsh-plugin-image-tools
+# 或 GitHub
+dsh plugin --profile web add github:Pasumao/dsh-plugin-image-tools
 ```
 
-profile 的 `package.json` 需要包含：
-
-```jsonc
-{
-  "dependencies": {
-    "dsh-plugin-image-tools": "link:D:/dsh/plugins/dsh-plugin-image-tools"
-  },
-  "dsh": {
-    "profile": {
-      "bundles": [ /* ... */, "dsh-plugin-image-tools" ]
-    }
-  }
-}
-```
-
-`dsh.profile.bundles` 里的包会自动应用其自带 `cordis.patch.yml` 的挂载行
-（与 dsh-notify 同机制）。
+装完重启 dsh（launcher），然后刷新浏览器页面。包自带 `cordis.patch.yml` 挂载行，
+经 `dsh.profile.bundles` 自动应用（与 dsh-notify 同机制），无需手动改配置。
 
 ## 模型用法示例
 
@@ -181,4 +165,4 @@ profile 的 `package.json` 需要包含：
 
 ## 许可证
 
-MIT
+[MIT](./LICENSE)
