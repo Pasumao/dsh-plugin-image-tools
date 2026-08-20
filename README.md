@@ -93,6 +93,15 @@ cordis.patch.yml      bundle 补丁（挂载行）
 docs/                 效果图（README 展示用）
 ```
 
+## 配置
+
+无需任何配置，安装即用：
+
+- 不读取环境变量，不需要 API Key / token，不写配置文件；
+- 图片来源三种形态（本地路径 / http(s) URL / base64 data URI）直接可用，无白名单配置；
+- 图片内联预览走同源字节路由（loopback），无外部服务依赖；
+- 包自带 `cordis.patch.yml` 挂载行，经 `dsh.profile.bundles` 自动应用，无需手动改配置。
+
 ## 安装
 
 ```powershell
@@ -100,6 +109,15 @@ docs/                 效果图（README 展示用）
 dsh plugin --profile web add dsh-plugin-image-tools
 # 或 GitHub
 dsh plugin --profile web add github:Pasumao/dsh-plugin-image-tools
+```
+
+源码安装（本地开发 / 调试）：
+
+```bash
+git clone https://github.com/Pasumao/dsh-plugin-image-tools.git
+cd dsh-plugin-image-tools
+npm install
+# 以 link: 方式挂载进 profile
 ```
 
 装完重启 dsh（launcher），然后刷新浏览器页面。包自带 `cordis.patch.yml` 挂载行，
@@ -162,6 +180,11 @@ dsh plugin --profile web add github:Pasumao/dsh-plugin-image-tools
 - 图片路由为同源普通 HTTP 路由（与 GUI 同信任级别），未加额外鉴权。
 - 内嵌图片的 markdown URL 是绝对地址（`http://host:port`，由服务端监听配置推导）；
   若 GUI 经过反向代理/换端口访问，历史消息里的图片地址可能失效（同选择卡的限制）。
+
+## AI 生成声明
+
+代码与文档由 AI 辅助生成（DeepSeek Harness），均经人工审查与实机验证
+（`npm run smoke`：selfcheck + 假 ctx 服务端全链路 + 假客户端渲染）。
 
 ## 许可证
 
