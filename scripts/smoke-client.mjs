@@ -59,6 +59,61 @@ assert.ok(mod.isShowImageSrc('http://127.0.0.1:3080/dsh-plugin-image-tools/show/
 assert.ok(!mod.isShowImageSrc('/dsh-plugin-image-tools/abc/0'), '选择卡路由不应被识别为内嵌图')
 assert.ok(!mod.isShowImageSrc('https://example.com/a.png'), '外部图片不应被识别')
 assert.equal(mod.startInlineEnhancer(), null, '无 DOM 环境下不应启动观察器')
+assert.equal(mod.startClickDelegation(), null, '无 DOM 环境下不应挂点击委托')
+
+// 5a) 聊天栏图片放大判定（纯逻辑，fake DOM 对象）
+const fakeClosest = (insideFlow, inButton, inPick) => (sel) => {
+  if (sel === '[data-chat-flow]') return insideFlow ? {} : null
+  if (sel === 'button, a, [role="button"], [role="link"], [role="menuitem"]') return inButton ? {} : null
+  if (sel === '.dshpick-lightbox, .dshpick-card, .dshpick-cards, .dshpick-thumb') return inPick ? {} : null
+  return null
+}
+const fakeImg = (opts) => ({
+  getAttribute: (k) => (k === 'src' ? (opts.src ?? '') : null),
+  currentSrc: opts.currentSrc ?? '',
+  closest: fakeClosest(opts.insideFlow ?? false, opts.inButton ?? false, opts.inPick ?? false),
+  getBoundingClientRect: () => ({ width: opts.w ?? 320, height: opts.h ?? 240 }),
+  naturalWidth: opts.nw ?? 640,
+  dataset: opts.dataset ?? {},
+})
+assert.equal(mod.isPluginImageSrc('/dsh-plugin-image-tools/show/a/0'), true, 'show 路由应判定为插件图')
+assert.equal(mod.isPluginImageSrc('http://127.0.0.1:3080/dsh-plugin-image-tools/attachment/att-123'), true, 'attachment 绝对 URL 应判定为插件图')
+assert.equal(mod.isPluginImageSrc('/dsh-plugin-image-tools/pick-1/0'), false, '选择卡路由不是内嵌插件图')
+assert.equal(mod.isZoomableChatImage(fakeImg({ insideFlow: true })), true, '聊天栏内内容图应可放大')
+assert.equal(mod.isZoomableChatImage(fakeImg({ insideFlow: true, w: 16, h: 16, nw: 16 })), false, '聊天栏内小图标不应放大')
+assert.equal(mod.isZoomableChatImage(fakeImg({ insideFlow: true, inButton: true })), false, '按钮内图片应放行给原生语义')
+assert.equal(mod.isZoomableChatImage(fakeImg({ insideFlow: true, inPick: true })), false, '选择卡内图片应由卡片自己的放大处理')
+assert.equal(mod.isZoomableChatImage(fakeImg({ insideFlow: false, src: 'https://example.com/a.png' })), false, '聊天栏外的图片不放大')
+assert.equal(mod.isZoomableChatImage(fakeImg({ insideFlow: true, src: '/dsh-plugin-image-tools/show/x/0' })), true, '插件图无条件放大')
+assert.equal(mod.isZoomableChatImage(null), false, 'null 不应放大')
+
+// 5c) 放大层缩放纯函数
+assert.equal(mod.clampZoom(0.1), 0.25, '缩放下限 0.25x')
+assert.equal(mod.clampZoom(20), 12, '缩放上限 12x')
+assert.equal(mod.clampZoom(2), 2, '范围内原样')
+assert.ok(mod.wheelZoomFactor(-100) > 1, '向上滚应放大')
+assert.ok(mod.wheelZoomFactor(100) < 1, '向下滚应缩小')
+// 光标中心缩放：缩放前后光标下的图像点屏幕位置不变
+const zt = mod.zoomTranslate(0, 0, 1, 2, 100, 50)
+assert.ok(Math.abs((100 * 2 + zt.tx) - 100) < 1e-9, '光标中心缩放后 x 不动')
+assert.ok(Math.abs((50 * 2 + zt.ty) - 50) < 1e-9, '光标中心缩放后 y 不动')
+// 平移钳制：scale=1 保持 flex 居中（t=0）；超出视口后限位、图像始终覆盖视口
+// （左右/上下边缘都能拖到——这是修复"放大后拖不到右边"的关键约束）
+const zoomBase = { w0: 200, h0: 100 }
+const zoomView = { viewW: 1000, viewH: 800 }
+assert.deepEqual(mod.clampPan(50, 50, 1, zoomBase, zoomView), { tx: 0, ty: 0 }, 'scale=1 保持居中')
+assert.deepEqual(mod.clampPan(50, 50, 4, zoomBase, zoomView), { tx: 0, ty: 0 }, '4x 仍小于视口 → 居中')
+assert.deepEqual(mod.clampPan(-10000, 0, 8, zoomBase, zoomView), { tx: -1000, ty: 0 }, '8x 超出视口 → 限位到左边缘')
+assert.deepEqual(mod.clampPan(99999, -99999, 8, zoomBase, zoomView), { tx: 0, ty: -350 }, '8x 超出视口 → 限位到右/上边缘')
+// 基准尺寸推导：与 .dshpick-lightboxFigure img 的 CSS 约束一致（max-width min(92vw,1100) / max-height 82vh）
+const fit = mod.fitBaseSize(2000, 1000, 1000, 800)
+assert.ok(Math.abs(fit.w0 - 920) < 1e-9 && Math.abs(fit.h0 - 460) < 1e-9, '宽图按 92vw 等比缩放')
+const fit2 = mod.fitBaseSize(800, 2000, 1000, 800)
+assert.ok(Math.abs(fit2.h0 - 656) < 1e-9 && Math.abs(fit2.w0 - 262.4) < 1e-9, '高图按 82vh 等比缩放')
+const fit3 = mod.fitBaseSize(500, 300, 1000, 800)
+assert.deepEqual(fit3, { w0: 500, h0: 300 }, '小于约束时保持自然尺寸')
+const fit4 = mod.fitBaseSize(3000, 3000, 400, 300)
+assert.ok(fit4.w0 <= 368 + 1e-9 && fit4.h0 <= 246 + 1e-9, '小视口下同时受宽高约束')
 
 // 5b) 盲模型收图占位符 token 提取
 assert.deepEqual(mod.extractImageTokenIds('📷 图片 dshimg:att-aaa111bbb222 和 dshimg:att-ccc333ddd444'), ['att-aaa111bbb222', 'att-ccc333ddd444'])

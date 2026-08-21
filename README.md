@@ -181,6 +181,20 @@ npm install
 - 内嵌图片的 markdown URL 是绝对地址（`http://host:port`，由服务端监听配置推导）；
   若 GUI 经过反向代理/换端口访问，历史消息里的图片地址可能失效（同选择卡的限制）。
 
+## 相关插件
+
+本插件属于 **Pasumao 的 dsh 插件生态**，同系列已发布插件可搭配使用：
+
+| 插件（npm） | GitHub | 说明 |
+|---|---|---|
+| [dsh-notify](https://www.npmjs.com/package/dsh-notify) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-notify) | Windows 原生通知 + 系统托盘 |
+| [dsh-plugin-choice-refresh](https://www.npmjs.com/package/dsh-plugin-choice-refresh) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-choice-refresh) | 选择增强：重新生成选项 / 更多选项 |
+| [dsh-plugin-dev-kb](https://www.npmjs.com/package/dsh-plugin-dev-kb) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-dev-kb) | 插件开发知识库（官方文档完整镜像 + 技能） |
+| [dsh-plugin-table-zoom](https://www.npmjs.com/package/dsh-plugin-table-zoom) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-table-zoom) | 聊天长表格浮窗查看 + 一键复制 Markdown |
+| [dsh-plugin-workbench](https://www.npmjs.com/package/dsh-plugin-workbench) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-workbench) | VS Code 风格文件浏览器 + 可编辑预览 |
+
+> 本系列其余插件见 [Pasumao · dsh 插件](https://github.com/Pasumao)；觉得好用欢迎到 GitHub 点 ⭐。
+
 ## AI 生成声明
 
 代码与文档由 AI 辅助生成（DeepSeek Harness），均经人工审查与实机验证
