@@ -16,7 +16,7 @@ import { strict as assert } from 'node:assert'
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { apply, ROUTE_PREFIX } from '../lib/index.js'
+import { apply, IMAGE_CACHE_CONTROL, ROUTE_PREFIX } from '../lib/index.js'
 
 const pngBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4])
 
@@ -139,6 +139,7 @@ route.handler(
 )
 assert.equal(served.status, 200)
 assert.equal(served.headers['content-type'], 'image/png')
+assert.equal(served.headers['cache-control'], IMAGE_CACHE_CONTROL, '选择卡图片应下发长缓存')
 assert.deepEqual(served.body, pngBytes)
 // 越界下标 → 404
 let notFound = null
@@ -201,6 +202,7 @@ for (const index of [0, 1]) {
 }
 assert.equal(showServed[0].status, 200)
 assert.equal(showServed[0].headers['content-type'], 'image/png')
+assert.equal(showServed[0].headers['cache-control'], IMAGE_CACHE_CONTROL, '内嵌图片应下发长缓存')
 assert.deepEqual(showServed[0].body, pngBytes)
 assert.equal(showServed[1].status, 200)
 // 越界 → 404
@@ -250,6 +252,7 @@ await route.handler(
 )
 assert.equal(attServed.status, 200)
 assert.equal(attServed.headers['content-type'], 'image/png')
+assert.equal(attServed.headers['cache-control'], IMAGE_CACHE_CONTROL, '附件回显应下发长缓存')
 assert.deepEqual(attServed.body, pngBytes)
 // 未知附件 → 404
 let attNotFound = null
