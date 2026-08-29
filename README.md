@@ -54,33 +54,6 @@
   - 保存的文件名优先用附件自带的安全文件名，否则按 `image-<n>-<时间戳>.<ext>` 生成。
 - 纯文字问题不带图片时，客户端自动放行给原生 UI，互不影响。
 
-## 实现要点（为什么是插件而不是改核心）
-
-浏览器端消费 `question/requested` 帧时用 zod schema 严格解析，选项对象上的未知
-字段会被剥离；助手消息 content 由模型文本生成，也没有携带结构化图片块的通道。
-所以图片**不能**塞进 option / content 字段。本插件改为：
-
-1. 服务端把图片字节归一化进内存注册表，通过自定义 web 路由
-   `/dsh-plugin-image-tools/<pickId>/<index>`（选择卡）、
-   `/dsh-plugin-image-tools/show/<showId>/<index>`（回复内嵌）与
-   `/dsh-plugin-image-tools/attachment/<attachmentId>`（盲模型收图回显）
-   直接提供字节（同源 `<img src>` 加载）；
-2. 选择卡：在问题的 `detail`（标准字符串字段，原样透传）开头写入不可见的
-   HTML 注释标记 `<!--dsh-pick:v1:<base64url JSON>-->`，携带 pickId 与带图选项下标；
-   客户端插件在 `conversation.composer` slot 链注册条目（priority 更小，优先于原生），
-   识别标记后渲染图片选择卡；无标记的问题交给原生 UI；
-3. 回复内嵌：`show_images` 返回绝对 URL（宿主 origin 由 `ctx.webServer.host/port`
-   推导），模型粘贴进正文，核心 markdown 渲染器原生显示；客户端再对
-   `/dsh-plugin-image-tools/show/` 前缀的图片做渐进增强（MutationObserver 发现 +
-   单节点样式/事件注入，纯 DOM，不侵入 React 渲染树）；
-4. 盲模型收图：注册 `agent/pre-step` waterfall 监听器（与 agent-instructions /
-   time-context 同机制），把进入 LLM 步骤的消息批次里的 image 块重写为文本占位符
-   （登记附件 ref 到 TTL 注册表），会话日志/UI 因此保持纯文本安全；客户端增强器
-   在用户气泡文本里识别 `dshimg:<id>` 占位符并替换为可放大图片；`save_received_images`
-   经 `ctx.attachments.readImage` 取回附件字节落盘。
-
-详见 `设计说明.md`。
-
 ## 目录结构
 
 ```
@@ -172,6 +145,33 @@ npm install
 需要调整配色或构图可以告诉我。
 ```
 
+## 实现要点（为什么是插件而不是改核心）
+
+浏览器端消费 `question/requested` 帧时用 zod schema 严格解析，选项对象上的未知
+字段会被剥离；助手消息 content 由模型文本生成，也没有携带结构化图片块的通道。
+所以图片**不能**塞进 option / content 字段。本插件改为：
+
+1. 服务端把图片字节归一化进内存注册表，通过自定义 web 路由
+   `/dsh-plugin-image-tools/<pickId>/<index>`（选择卡）、
+   `/dsh-plugin-image-tools/show/<showId>/<index>`（回复内嵌）与
+   `/dsh-plugin-image-tools/attachment/<attachmentId>`（盲模型收图回显）
+   直接提供字节（同源 `<img src>` 加载）；
+2. 选择卡：在问题的 `detail`（标准字符串字段，原样透传）开头写入不可见的
+   HTML 注释标记 `<!--dsh-pick:v1:<base64url JSON>-->`，携带 pickId 与带图选项下标；
+   客户端插件在 `conversation.composer` slot 链注册条目（priority 更小，优先于原生），
+   识别标记后渲染图片选择卡；无标记的问题交给原生 UI；
+3. 回复内嵌：`show_images` 返回绝对 URL（宿主 origin 由 `ctx.webServer.host/port`
+   推导），模型粘贴进正文，核心 markdown 渲染器原生显示；客户端再对
+   `/dsh-plugin-image-tools/show/` 前缀的图片做渐进增强（MutationObserver 发现 +
+   单节点样式/事件注入，纯 DOM，不侵入 React 渲染树）；
+4. 盲模型收图：注册 `agent/pre-step` waterfall 监听器（与 agent-instructions /
+   time-context 同机制），把进入 LLM 步骤的消息批次里的 image 块重写为文本占位符
+   （登记附件 ref 到 TTL 注册表），会话日志/UI 因此保持纯文本安全；客户端增强器
+   在用户气泡文本里识别 `dshimg:<id>` 占位符并替换为可放大图片；`save_received_images`
+   经 `ctx.attachments.readImage` 取回附件字节落盘。
+
+详见 `设计说明.md`。
+
 ## 安全与限制
 
 - 图片字节仅存于进程内存：选择卡图片随问题回答/取消立即释放；
@@ -197,7 +197,7 @@ npm install
 | [dsh-plugin-choice-refresh](https://www.npmjs.com/package/dsh-plugin-choice-refresh) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-choice-refresh) | 选择增强：重新生成选项 / 更多选项 |
 | [dsh-plugin-dev-kb](https://www.npmjs.com/package/dsh-plugin-dev-kb) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-dev-kb) | 插件开发知识库（官方文档完整镜像 + 技能） |
 | [dsh-plugin-table-zoom](https://www.npmjs.com/package/dsh-plugin-table-zoom) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-table-zoom) | 聊天长表格浮窗查看 + 一键复制 Markdown |
-| [dsh-plugin-windows-guard](https://www.npmjs.com/package/dsh-plugin-windows-guard) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-windows-guard) | Windows 环境防坑守则 skill（编码/转义/路径/进程/乱码预防） |
+| [dsh-plugin-windows-guard](https://www.npmjs.com/package/dsh-plugin-windows-guard) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-windows-guard) | Windows 环境防坑：守则技能 + 乱码检测 / 危险写拦截 / 编码诊断修复 |
 | [dsh-plugin-workbench](https://www.npmjs.com/package/dsh-plugin-workbench) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-workbench) | VS Code 风格文件浏览器 + 可编辑预览 |
 
 > 本系列其余插件见 [Pasumao · dsh 插件](https://github.com/Pasumao)；觉得好用欢迎到 GitHub 点 ⭐。

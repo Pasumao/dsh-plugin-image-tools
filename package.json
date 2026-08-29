@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-image-tools",
-  "description": "DSH 图片插件：ask_user_choice 图片/图文混合选项（Web GUI 渲染图片选择卡，可放大查看）+ show_images 在回复中内嵌图片（图片与文字混排）+ 聊天栏所有图片点击放大，放大层支持滚轮/按钮缩放与拖拽平移。图片来源支持本地路径 / http(s) URL / base64 data URI。纯插件实现，不改核心包。",
+  "description": "DSH 图片插件，三个工具覆盖三种场景：ask_user_choice 图片/图文混合选择卡（Web GUI 渲染，可放大查看）+ show_images 回复内嵌图片（图文混排）+ save_received_images 盲模型收图存为工作区文件；聊天栏所有图片点击放大，支持滚轮缩放与拖拽平移。来源支持本地路径 / http(s) URL / base64 data URI。零 token 本地渲染，纯插件实现不改核心包。",
   "version": "0.6.3",
   "type": "module",
   "main": "lib/index.js",
@@ -40,9 +40,16 @@
     "ask",
     "choice",
     "image",
+    "image-picker",
     "picker",
     "show",
-    "inline"
+    "inline",
+    "inline-image",
+    "lightbox",
+    "zoom",
+    "multimodal",
+    "vision",
+    "attachment"
   ],
   "repository": {
     "type": "git",
