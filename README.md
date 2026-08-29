@@ -4,6 +4,8 @@
 ![License](https://img.shields.io/github/license/Pasumao/dsh-plugin-image-tools)
 ![AI Assisted](https://img.shields.io/badge/AI-Assisted-8A2BE2)
 
+[**中文**](./README.md) | [English](./README.en.md)
+
 **dsh 插件市场里唯一支持「图片选择卡」的插件**：给 DeepSeek Harness Web GUI 增加图片能力，
 三个工具覆盖三种场景——模型让你在选项里挑图、在回复正文里展示图、你把图发给盲模型。全部零 token 本地渲染：
 

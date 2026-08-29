@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.4] - 2026-08-29
+
+- 文档：「实现要点」整节下移到「模型用法示例」之后（访客先看价值再看原理）；
+- 元数据：npm description 补齐第三个工具 save_received_images，keywords 12 → 19；
+- 新增英文版 README.en.md 与双语切换行；CHANGELOG.md 纳入 npm files。
 ## [0.6.3] - 2026-08-25
 
 - 相关插件段新增 dsh-plugin-windows-guard（Windows 环境防坑守则 skill 插件，互相引流）。
