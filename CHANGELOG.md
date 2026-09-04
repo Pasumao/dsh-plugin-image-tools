@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.6] - 2026-09-04
+
+- 文档：中英 README 新增「兼容性」节——实测于 dsh 0.1.2-rc.1；选择卡 0.6.5 起适配
+  `pendingInteraction` / `PendingQuestion` 新协议；聊天图片放大依赖的 `data-chat-flow`
+  容器、`dshimg:` 占位符、lightbox 已逐一核验保留；测试基建自带 react/react-dom@19
+  devDependencies，`npm run smoke` 不再依赖宿主安装布局。
+# Changelog
+
 ## [0.6.5] - 2026-09-04
 
 - 适配 dsh 0.1.2-rc.1：conversation.composer 链条目 select 入参由 `{interactions}` 改为 `{pendingInteraction}`（原生 PendingQuestion 单对象），按 questions/answer/cancel 鸭子类型认领带图片标记的问题批，plan-review 放行；

@@ -221,6 +221,20 @@ See `设计说明.md` for details.
   proxy or on a different port, image addresses in historical messages may break (same
   limitation as choice cards).
 
+## Compatibility
+
+- Tested on DSH `0.1.2-rc.1` (since 0.6.5 the choice-card entry is adapted to that
+  version's new protocol: the `conversation.composer` chain selector receives a single
+  `pendingInteraction` (the native `PendingQuestion`), and answers go through
+  `.answer({answers})` / `.cancel()`); since 0.6.6 the tests bundle their own
+  react/react-dom and no longer depend on the host installation layout.
+- The `data-chat-flow` container, the `dshimg:` placeholder protocol, and the lightbox —
+  all anchors the chat image zoom relies on — were verified one by one against
+  `dsh-client-ui-chat` in 0.1.2-rc.1.
+- Plain-text questions are unaffected (handed to the native UI or
+  `dsh-plugin-choice-refresh`).
+- Depends on the client services `slots` / `locale`.
+
 ## Related plugins
 
 This plugin is part of **Pasumao's dsh plugin ecosystem**; the published plugins in the

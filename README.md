@@ -189,6 +189,16 @@ npm install
 - 内嵌图片的 markdown URL 是绝对地址（`http://host:port`，由服务端监听配置推导）；
   若 GUI 经过反向代理/换端口访问，历史消息里的图片地址可能失效（同选择卡的限制）。
 
+## 兼容性
+
+- 实测于 DSH `0.1.2-rc.1`（0.6.5 起适配该版选择卡新协议：`conversation.composer` 链的
+  select 入参改为单对象 `pendingInteraction`（原生 `PendingQuestion`），应答走
+  `.answer({answers})` / `.cancel()`）；0.6.6 起测试自带 react/react-dom，不再依赖宿主安装布局。
+- 聊天图片放大所依赖的 `data-chat-flow` 容器、`dshimg:` 占位符协议、lightbox 已在
+  0.1.2-rc.1 的 `dsh-client-ui-chat` 中逐一核验保留。
+- 纯文字问题不受本插件影响（放行给原生 UI 或 `dsh-plugin-choice-refresh`）。
+- 依赖客户端服务：`slots` / `locale`。
+
 ## 相关插件
 
 本插件属于 **Pasumao 的 dsh 插件生态**，同系列已发布插件可搭配使用：
