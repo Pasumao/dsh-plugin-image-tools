@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5] - 2026-09-04
+
+- 适配 dsh 0.1.2-rc.1：conversation.composer 链条目 select 入参由 `{interactions}` 改为 `{pendingInteraction}`（原生 PendingQuestion 单对象），按 questions/answer/cancel 鸭子类型认领带图片标记的问题批，plan-review 放行；
+- 待答载体 PendingChoice 改为包装 PendingQuestion（`.answer({answers})` / `.cancel()` 直调，替代旧 `wait.respond` 协议）；
+- DOM 增强部分（data-chat-flow 容器、dshimg 占位符、lightbox）经核验在新版 dsh-client-ui-chat 中锚点全部保留，无需改动。
+# Changelog
+
 ## [0.6.4] - 2026-08-29
 
 - 文档：「实现要点」整节下移到「模型用法示例」之后（访客先看价值再看原理）；

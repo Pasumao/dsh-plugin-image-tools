@@ -19,12 +19,13 @@ import { buildPickMarker } from '../lib/index.js'
 
 const require = createRequire(import.meta.url)
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-// 从 profile 的共享 node_modules 树解析 react（单实例：jsx-runtime/react-dom 同源）
-const profileRequire = createRequire(join('C:/Users/18303/.dsh/profiles/node_modules', 'noop.cjs'))
-const reactRoot = dirname(profileRequire.resolve('react'))
+// 优先用插件自带的 devDependencies react（0.6.5 起 dsh-app 根部 react 可能被降级
+// 到 16.8、无 jsx-runtime，与 react-dom 19 不同源）；本地没有时退回 profile 共享树。
+const localRequire = createRequire(join(ROOT, 'noop.cjs'))
+const reactRoot = dirname(localRequire.resolve('react'))
 const jsxRuntime = join(reactRoot, 'jsx-runtime.js')
-const reactModule = profileRequire('react')
-const reactDomServer = profileRequire('react-dom/server')
+const reactModule = localRequire('react')
+const reactDomServer = localRequire('react-dom/server')
 
 // 1) 模拟浏览器模块加载器
 let spec = null
@@ -121,24 +122,28 @@ assert.deepEqual(mod.extractImageTokenIds('📷 图片 dshimg:att-aaa111bbb222 �
 assert.deepEqual(mod.extractImageTokenIds('没有 token'), [])
 assert.deepEqual(mod.extractImageTokenIds(undefined), [])
 
-// 2) select：认领带标记问题，放过纯文字问题
+// 2) select：认领带标记问题，放过纯文字/plan-review（dsh 0.1.2 协议：
+// 入参 { pendingInteraction }，questions 直挂、带 answer()/cancel()）
 const markerDetail = buildPickMarker('pick-1', [0, 2]) + '\n\n请选择一张图'
-const withImage = {
+const fakePending = (questions, extra) => ({
   kind: 'question',
-  key: 'q:1',
+  key: 'q:x',
   sessionId: 's1',
-  payload: { type: 'question/requested', sessionId: 's1', questions: [{ id: 'a', question: '选图', detail: markerDetail, options: [{ label: 'A' }, { label: 'B' }, { label: 'C' }] }] },
-}
-const plain = {
-  kind: 'question',
-  key: 'q:2',
-  sessionId: 's2',
-  payload: { type: 'question/requested', sessionId: 's2', questions: [{ id: 'b', question: '纯文字', options: [{ label: 'X' }] }] },
-}
-const approval = { kind: 'approval', key: 'a:1', sessionId: 's1', payload: {} }
-assert.equal(mod.selectPickChoice({ interactions: [plain] }), null, '纯文字问题应放行')
-assert.equal(mod.selectPickChoice({ interactions: [approval, plain] }), null, '无图问题应放行')
-assert.equal(mod.selectPickChoice({ interactions: [plain, withImage] }), withImage, '带图问题应认领')
+  questions,
+  answer: async () => {},
+  cancel: async () => {},
+  ...extra,
+})
+const withImage = fakePending([{ id: 'a', question: '选图', detail: markerDetail, options: [{ label: 'A' }, { label: 'B' }, { label: 'C' }] }], { key: 'q:1' })
+const plain = fakePending([{ id: 'b', question: '纯文字', options: [{ label: 'X' }] }], { key: 'q:2', sessionId: 's2' })
+const planReview = fakePending(
+  [{ id: 'c', question: '确认计划', detail: '计划', intent: { kind: 'plan-review', approve: '执行' }, options: [{ label: '执行' }] }],
+  { key: 'q:3', kind: 'plan-review' },
+)
+assert.equal(mod.selectPickChoice({ pendingInteraction: plain }), null, '纯文字问题应放行')
+assert.equal(mod.selectPickChoice({ pendingInteraction: planReview }), null, 'plan-review 应放行')
+assert.equal(mod.selectPickChoice({ pendingInteraction: null }), null, '无 pendingInteraction 应放行')
+assert.equal(mod.selectPickChoice({ pendingInteraction: withImage }), withImage, '带图问题应认领')
 
 // 3) parseMarker 与服务端互通
 const parsed = mod.parseMarker(markerDetail)
@@ -148,10 +153,12 @@ assert.deepEqual({ pickId: parsed.pickId, images: parsed.images, human: parsed.h
 const { renderToString } = reactDomServer
 const fakeT = (key) => ({ 'nav.cancel': '取消', 'action.skip': '跳过', 'action.next': '下一步', 'submit': '提交', 'option.recommended': '推荐', 'custom.placeholder': '输入答案', 'image.failed': '加载失败', 'image.zoom': '放大查看', 'image.close': '关闭' }[key] ?? key)
 const fakeWait = {
+  kind: 'question',
   key: 'q:1',
   sessionId: 's1',
-  payload: { type: 'question/requested', sessionId: 's1', questions: [{ id: 'a', question: '选一张封面', header: '封面', detail: markerDetail, multiSelect: false, options: [{ label: 'A (Recommended)', description: '第一张' }, { label: 'B' }, { label: 'C' }] }] },
-  respond: async (r) => ({ accepted: true }),
+  questions: [{ id: 'a', question: '选一张封面', header: '封面', detail: markerDetail, multiSelect: false, options: [{ label: 'A (Recommended)', description: '第一张' }, { label: 'B' }, { label: 'C' }] }],
+  answer: async () => {},
+  cancel: async () => {},
 }
 const html = renderToString(reactModule.createElement(mod.ImageChoiceComposer, { matched: fakeWait, t: fakeT }))
 assert.ok(html.includes('dshpick-card'), '卡片未渲染')
