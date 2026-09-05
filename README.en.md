@@ -1,10 +1,16 @@
-[中文](./README.md) | **English**
+<p align="center">
+  <img src="docs/banner.svg" alt="dsh-plugin-image-tools banner" width="100%">
+</p>
 
 # dsh-plugin-image-tools
 
 ![npm version](https://img.shields.io/npm/v/dsh-plugin-image-tools)
+![npm downloads](https://img.shields.io/npm/dm/dsh-plugin-image-tools)
 ![License](https://img.shields.io/github/license/Pasumao/dsh-plugin-image-tools)
+![Stars](https://img.shields.io/github/stars/Pasumao/dsh-plugin-image-tools?style=social)
 ![AI Assisted](https://img.shields.io/badge/AI-Assisted-8A2BE2)
+
+[中文](./README.md) | **English**
 
 **The only plugin in the dsh market supporting image choice cards**: it adds image
 capabilities to the DeepSeek Harness Web GUI, with three tools covering three scenarios —
@@ -248,6 +254,7 @@ series can be used together:
 | [dsh-plugin-table-zoom](https://www.npmjs.com/package/dsh-plugin-table-zoom) | [GitHub repo](https://github.com/Pasumao/dsh-plugin-table-zoom) | Floating viewer for long chat tables + one-click copy as Markdown |
 | [dsh-plugin-windows-guard](https://www.npmjs.com/package/dsh-plugin-windows-guard) | [GitHub repo](https://github.com/Pasumao/dsh-plugin-windows-guard) | Windows environment safeguards: rules skills + garbled-text detection / dangerous-write blocking / encoding diagnosis & repair |
 | [dsh-plugin-workbench](https://www.npmjs.com/package/dsh-plugin-workbench) | [GitHub repo](https://github.com/Pasumao/dsh-plugin-workbench) | VS Code-style file explorer + editable preview |
+| [dsh-plugin-context-trim](https://www.npmjs.com/package/dsh-plugin-context-trim) | [GitHub repo](https://github.com/Pasumao/dsh-plugin-context-trim) | Per-session injection gate: trim skills / tools / prompt sections per session |
 
 > For the rest of the series, see [Pasumao · dsh plugins](https://github.com/Pasumao);
 > if you find them useful, feel free to give a ⭐ on GitHub.

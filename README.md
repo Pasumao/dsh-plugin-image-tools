@@ -1,7 +1,13 @@
+<p align="center">
+  <img src="docs/banner.svg" alt="dsh-plugin-image-tools banner" width="100%">
+</p>
+
 # dsh-plugin-image-tools
 
 ![npm version](https://img.shields.io/npm/v/dsh-plugin-image-tools)
+![npm downloads](https://img.shields.io/npm/dm/dsh-plugin-image-tools)
 ![License](https://img.shields.io/github/license/Pasumao/dsh-plugin-image-tools)
+![Stars](https://img.shields.io/github/stars/Pasumao/dsh-plugin-image-tools?style=social)
 ![AI Assisted](https://img.shields.io/badge/AI-Assisted-8A2BE2)
 
 [**中文**](./README.md) | [English](./README.en.md)
@@ -149,6 +155,9 @@ npm install
 
 ## 实现要点（为什么是插件而不是改核心）
 
+<details>
+<summary><b>展开实现细节</b></summary>
+
 浏览器端消费 `question/requested` 帧时用 zod schema 严格解析，选项对象上的未知
 字段会被剥离；助手消息 content 由模型文本生成，也没有携带结构化图片块的通道。
 所以图片**不能**塞进 option / content 字段。本插件改为：
@@ -173,6 +182,8 @@ npm install
    经 `ctx.attachments.readImage` 取回附件字节落盘。
 
 详见 `设计说明.md`。
+
+</details>
 
 ## 安全与限制
 
@@ -212,6 +223,7 @@ npm install
 | [dsh-plugin-windows-guard](https://www.npmjs.com/package/dsh-plugin-windows-guard) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-windows-guard) | Windows 环境防坑：守则技能 + 乱码检测 / 危险写拦截 / 编码诊断修复 |
 | [dsh-plugin-workbench](https://www.npmjs.com/package/dsh-plugin-workbench) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-workbench) | VS Code 风格文件浏览器 + 可编辑预览 |
 
+| [dsh-plugin-context-trim](https://www.npmjs.com/package/dsh-plugin-context-trim) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-context-trim) | 会话注入门控：skill / tool / 提示词段落按会话裁剪 |
 > 本系列其余插件见 [Pasumao · dsh 插件](https://github.com/Pasumao)；觉得好用欢迎到 GitHub 点 ⭐。
 
 ## AI 生成声明
@@ -219,6 +231,6 @@ npm install
 代码与文档由 AI 辅助生成（DeepSeek Harness），均经人工审查与实机验证
 （`npm run smoke`：selfcheck + 假 ctx 服务端全链路 + 假客户端渲染）。
 
-## 许可证
+## License
 
 [MIT](./LICENSE)
