@@ -59,7 +59,9 @@
     `/dsh-plugin-image-tools/attachment/<id>` 路由出字节）；
   - 模型看到占位符后调用 `save_received_images`，把图片按 attachmentId 保存为
     工作区文件（默认 `received/`），之后可用文件/命令工具分析（尺寸、像素、哈希等）；
-  - 保存的文件名优先用附件自带的安全文件名，否则按 `image-<n>-<时间戳>.<ext>` 生成。
+  - 保存的文件名优先用附件自带的安全文件名，否则按 `image-<n>-<时间戳>.<ext>` 生成；
+  - `dir` 参数仅接受**工作区内相对路径**（默认 `received/`），绝对路径与含 `..`
+    的路径一律拒绝（安全加固，防止越出工作区写文件）。
 - 纯文字问题不带图片时，客户端自动放行给原生 UI，互不影响。
 
 ## 目录结构
@@ -187,6 +189,10 @@ npm install
 
 ## 安全与限制
 
+- **llm 能力补丁排他性**：为放行盲模型收图，宿主侧会改写 `llmService.resolveModelInfo`
+  （给模型能力补上 image 输入模态）。该 patch 是**排他**的——不能与其它同样改写
+  `resolveModelInfo` 的插件共存（后装者会覆盖先装者的补丁）；卸载时本插件只在
+  当前实现仍是自己的补丁时才还原，不会拆掉其它插件的补丁。
 - 图片字节仅存于进程内存：选择卡图片随问题回答/取消立即释放；
   内嵌图片与附件回显依赖 30 分钟 TTL 清理（需存活到回复渲染完成）。
 - **浏览器缓存兜底**：图片路由的 URL 是内容寻址的（pickId/showId 为 UUID、
@@ -222,8 +228,8 @@ npm install
 | [dsh-plugin-table-zoom](https://www.npmjs.com/package/dsh-plugin-table-zoom) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-table-zoom) | 聊天长表格浮窗查看 + 一键复制 Markdown |
 | [dsh-plugin-windows-guard](https://www.npmjs.com/package/dsh-plugin-windows-guard) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-windows-guard) | Windows 环境防坑：守则技能 + 乱码检测 / 危险写拦截 / 编码诊断修复 |
 | [dsh-plugin-workbench](https://www.npmjs.com/package/dsh-plugin-workbench) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-workbench) | VS Code 风格文件浏览器 + 可编辑预览 |
-
 | [dsh-plugin-context-trim](https://www.npmjs.com/package/dsh-plugin-context-trim) | [GitHub 仓库](https://github.com/Pasumao/dsh-plugin-context-trim) | 会话注入门控：skill / tool / 提示词段落按会话裁剪 |
+
 > 本系列其余插件见 [Pasumao · dsh 插件](https://github.com/Pasumao)；觉得好用欢迎到 GitHub 点 ⭐。
 
 ## AI 生成声明

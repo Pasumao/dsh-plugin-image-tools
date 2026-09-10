@@ -72,7 +72,10 @@ the body, so the images appear alongside the text.
     workspace files by attachmentId (default directory `received/`), where file/command
     tools can then analyze them (dimensions, pixels, hashes, etc.);
   - Saved filenames prefer the attachment's own safe filename, otherwise they are
-    generated as `image-<n>-<timestamp>.<ext>`.
+    generated as `image-<n>-<timestamp>.<ext>`;
+  - The `dir` parameter accepts only **relative paths inside the workspace**
+    (default `received/`); absolute paths and paths containing `..` are rejected
+    (security hardening, preventing writes outside the workspace).
 - Text-only questions without images are passed straight through to the native UI
   automatically; the two never interfere.
 
