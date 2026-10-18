@@ -117,6 +117,9 @@ assert.ok(fit4.w0 <= 368 + 1e-9 && fit4.h0 <= 246 + 1e-9, '小视口下同时受
 // 5b) 盲模型收图占位符 token 提取
 assert.deepEqual(mod.extractImageTokenIds('📷 图片 dshimg:att-aaa111bbb222 和 dshimg:att-ccc333ddd444'), ['att-aaa111bbb222', 'att-ccc333ddd444'])
 assert.deepEqual(mod.extractImageTokenIds('📷 图片 dshimg:att-aaa111bbb222 重复 dshimg:att-aaa111bbb222'), ['att-aaa111bbb222'])
+// dsh 0.2.0-rc.2 起附件 id 是内容寻址的 sha256:<64 hex>
+const contentAddressed = `sha256:${'a'.repeat(64)}`
+assert.deepEqual(mod.extractImageTokenIds(`📷 图片（p.png） dshimg:${contentAddressed}`), [contentAddressed], '内容寻址 id 应完整保留')
 assert.deepEqual(mod.extractImageTokenIds('没有 token'), [])
 assert.deepEqual(mod.extractImageTokenIds(undefined), [])
 

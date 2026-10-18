@@ -13,7 +13,7 @@
  * 运行：node scripts/smoke-server.mjs
  */
 import { strict as assert } from 'node:assert'
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { apply, IMAGE_CACHE_CONTROL, ROUTE_PREFIX } from '../lib/index.js'
@@ -28,6 +28,9 @@ let resolveAsk = null
 let preStepHandler = null
 const askPromise = new Promise((resolve) => { resolveAsk = resolve })
 const storedAttachments = new Map([['att-abc123def456', pngBytes]])
+/** 内容寻址附件：注册表里没有它，路由应回退到宿主对象路径。 */
+const durableAttachmentId = `sha256:${'ab'.repeat(32)}`
+let durableAttachmentPath = null
 
 const ctx = {
   effect(fn) {
@@ -57,6 +60,10 @@ const ctx = {
       const data = storedAttachments.get(ref.attachmentId)
       if (data === undefined) throw new Error(`attachment not found: ${ref.attachmentId}`)
       return { ref, data }
+    },
+    /** 内容寻址对象的宿主路径：只有 durableAttachmentBytes 会调用它。 */
+    imageHostPath(ref) {
+      return ref.attachmentId === durableAttachmentId ? durableAttachmentPath : undefined
     },
   },
   llm: {
@@ -261,6 +268,30 @@ await route.handler(
   { writeHead(status) { attNotFound = { status } }, end() {} },
 )
 assert.equal(attNotFound.status, 404)
+
+// 内容寻址 id：注册表为空（历史消息 / 重启后）也要能出字节
+const durableDir = mkdtempSync(join(tmpdir(), 'dsh-img-durable-'))
+durableAttachmentPath = join(durableDir, 'object')
+writeFileSync(durableAttachmentPath, pngBytes)
+let durableServed = null
+await route.handler(
+  { url: `${ROUTE_PREFIX}/attachment/${durableAttachmentId}` },
+  {
+    writeHead(status, headers) { durableServed = { status, headers } },
+    end(body) { durableServed.body = body },
+  },
+)
+assert.equal(durableServed.status, 200)
+assert.equal(durableServed.headers['content-type'], 'image/png')
+assert.equal(durableServed.headers['cache-control'], IMAGE_CACHE_CONTROL)
+assert.deepEqual(durableServed.body, pngBytes)
+// 形状合法但对象不存在 → 404，不会泄漏宿主路径
+let durableMissing = null
+await route.handler(
+  { url: `${ROUTE_PREFIX}/attachment/sha256:${'0'.repeat(64)}` },
+  { writeHead(status) { durableMissing = { status } }, end() {} },
+)
+assert.equal(durableMissing.status, 404)
 
 // save_received_images：保存到临时 cwd
 const tmpCwd = mkdtempSync(join(tmpdir(), 'dsh-img-tools-'))

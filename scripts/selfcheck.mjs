@@ -116,6 +116,9 @@ async function main() {
   })
   await ok('extractImageTokenIds finds ids', () => {
     assert.deepEqual(extractImageTokenIds('📷 图片 dshimg:aaa111bbb222 和 dshimg:ccc333ddd444 和 dshimg:aaa111bbb222'), ['aaa111bbb222', 'ccc333ddd444'])
+    // dsh 0.2.0-rc.2 起附件 id 是内容寻址的 sha256:<64 hex>
+    const contentAddressed = `sha256:${'a'.repeat(64)}`
+    assert.deepEqual(extractImageTokenIds(`📷 图片（p.png） dshimg:${contentAddressed}`), [contentAddressed], '内容寻址 id 应完整保留')
     assert.deepEqual(extractImageTokenIds('没有 token'), [])
     assert.deepEqual(extractImageTokenIds(undefined), [])
   })
