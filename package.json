@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-image-tools",
   "description": "DSH 图片插件，三个工具覆盖三种场景：ask_user_choice 图片/图文混合选择卡（Web GUI 渲染，可放大查看）+ show_images 回复内嵌图片（图文混排）+ save_received_images 盲模型收图存为工作区文件。来源支持本地路径 / http(s) URL / base64 data URI。零 token 本地渲染，纯插件实现不改核心包。聊天栏通用图片查看已交还原生 lightbox。",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

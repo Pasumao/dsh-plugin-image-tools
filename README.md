@@ -218,6 +218,9 @@ npm install
 - 聊天图片放大所依赖的 `data-chat-flow` 容器、`dshimg:` 占位符协议、lightbox 已在
   0.1.2-rc.1 的 `dsh-client-ui-chat` 中逐一核验保留；0.7.0 起聊天栏通用图片放大交还原生
   lightbox（DSH 0.2.0 原生 `dsh-client-ui-attachment` 已提供）。
+- 0.7.1 起兼容 DSH 0.2.0 的内容寻址附件 id（`sha256:<64 hex>`）：用户气泡的 `dshimg:`
+  回显正则放行 `:`；内存注册表为空（历史消息 / 重启后）时，`/attachment/<id>` 按内容寻址
+  直接从附件存储读取归一化对象，不再 404。
 - 纯文字问题不受本插件影响（放行给原生 UI 或 `dsh-plugin-choice-refresh`）。
 - 依赖客户端服务：`slots` / `locale`。
 

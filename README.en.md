@@ -247,6 +247,10 @@ See `设计说明.md` for details.
   all anchors the chat image zoom relies on — were verified one by one against
   `dsh-client-ui-chat` in 0.1.2-rc.1; since 0.7.0 the generic chat image zoom is handed back
   to the native lightbox (provided natively by DSH 0.2.0's `dsh-client-ui-attachment`).
+- Since 0.7.1, DSH 0.2.0's content-addressed attachment ids (`sha256:<64 hex>`) are supported:
+  the `dshimg:` bubble-echo regex accepts `:`; when the in-memory registry is empty (historical
+  messages / after a restart), `/attachment/<id>` reads the normalized object directly from
+  attachment storage instead of returning 404.
 - Plain-text questions are unaffected (handed to the native UI or
   `dsh-plugin-choice-refresh`).
 - Depends on the client services `slots` / `locale`.
