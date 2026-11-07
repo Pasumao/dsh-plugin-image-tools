@@ -15,6 +15,11 @@ import {
   imagePlaceholderText,
   extractImageTokenIds,
   rewriteMessageImages,
+  normalizeUserImagesMode,
+  acceptsImageInput,
+  modelSeesImages,
+  recordMessageImageRefs,
+  offloadUserImages,
   MAX_IMAGE_BYTES,
 } from '../lib/index.js'
 
@@ -27,6 +32,66 @@ async function ok(name, fn) {
 
 async function main() {
   console.log('[dsh-plugin-image-tools] selfcheck')
+
+  // --- userImages 模式 ---
+  await ok('normalizeUserImagesMode 回落默认 auto', () => {
+    assert.equal(normalizeUserImagesMode(undefined), 'auto')
+    assert.equal(normalizeUserImagesMode('nope'), 'auto')
+    assert.equal(normalizeUserImagesMode('always'), 'always')
+    assert.equal(normalizeUserImagesMode('native'), 'native')
+  })
+  await ok('acceptsImageInput 只认 image 模态', () => {
+    assert.equal(acceptsImageInput(['text', 'image']), true)
+    assert.equal(acceptsImageInput(['text']), false)
+    assert.equal(acceptsImageInput(undefined), false)
+    assert.equal(acceptsImageInput('image'), false)
+  })
+  await ok('normalizeUserImagesMode 支持 offload', () => {
+    assert.equal(normalizeUserImagesMode('offload'), 'offload')
+  })
+  await ok('offloadUserImages 缺 session / 缺能力时返回 false', () => {
+    assert.equal(offloadUserImages(undefined), false)
+    assert.equal(offloadUserImages({ id: 'a' }), false)
+    assert.equal(offloadUserImages({ session: { append() {} } }), false)
+    assert.equal(offloadUserImages({ session: { append() {}, ownEvents() { return [] }, deriveEventMessage() { return null } } }), false)
+  })
+  await ok('offloadUserImages 按 seq + 图片下标生成 targets', () => {
+    const appended = []
+    const session = {
+      append(type, data) { appended.push({ type, data }) },
+      ownEvents() {
+        return [
+          { seq: 7, type: 'user/message' },
+          { seq: 8, type: 'assistant/message' },
+          { seq: 9, type: 'tool/result' },
+        ]
+      },
+      deriveEventMessage(event) {
+        if (event.seq === 7) return { content: [{ type: 'image', attachment: { attachmentId: 'att-a' } }, { type: 'image', attachment: { attachmentId: 'att-b' }, offloaded: true }] }
+        if (event.seq === 9) return { content: [{ type: 'text', text: 'no image' }] }
+        return { content: [{ type: 'image', attachment: { attachmentId: 'att-c' } }] }
+      },
+    }
+    assert.equal(offloadUserImages({ session }), true)
+    assert.deepEqual(appended, [{ type: 'image/offload', data: { targets: [{ seq: 7, imageIndexes: [0] }] } }])
+  })
+  await ok('recordMessageImageRefs 不改消息', () => {
+    const messages = [{ content: [{ type: 'text', text: 'x' }, { type: 'image', attachment: { attachmentId: 'att-d' } }] }]
+    const before = JSON.stringify(messages)
+    recordMessageImageRefs(messages)
+    assert.equal(JSON.stringify(messages), before)
+    recordMessageImageRefs(undefined)
+    recordMessageImageRefs([null, { content: 'nope' }])
+  })
+  await ok('modelSeesImages 用原始方法判断、异常按看不到图', async () => {
+    const seesText = async () => ({ inputModalities: ['text'] })
+    const seesImage = async () => ({ inputModalities: ['text', 'image'] })
+    assert.equal(await modelSeesImages(seesImage, null, { provider: 'p', model: 'm' }), true)
+    assert.equal(await modelSeesImages(seesText, null, { provider: 'p', model: 'm' }), false)
+    assert.equal(await modelSeesImages(seesImage, null, undefined), false)
+    assert.equal(await modelSeesImages(seesImage, null, { provider: 'p' }), false)
+    assert.equal(await modelSeesImages(async () => { throw new Error('boom') }, null, { provider: 'p', model: 'm' }), false)
+  })
 
   // --- sniffMediaType ---
   await ok('sniff PNG', () => {

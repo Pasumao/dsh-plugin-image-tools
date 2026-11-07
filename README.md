@@ -55,6 +55,8 @@
   - 用户往聊天里发图片时，`agent/pre-step` 监听器把消息里的 image 内容块重写为
     文本占位符（`dshimg:<attachmentId>`）——文本-only 适配器（如 DeepSeek）不再
     因图片块报 `UNSUPPORTED_CONTENT`，回合照常运行；
+  - **只对看不到图的模型重写**（默认 `userImages: 'auto'`）：模型自己声明了 image
+    输入时图片块原样保留，原图直接进模型，用户气泡仍是 DSH 官方的附件样式；
   - 用户气泡里由客户端增强器把占位符替换为可放大的图片回显（附件经
     `/dsh-plugin-image-tools/attachment/<id>` 路由出字节）；
   - 模型看到占位符后调用 `save_received_images`，把图片按 attachmentId 保存为
@@ -78,7 +80,23 @@ docs/                 效果图（README 展示用）
 
 ## 配置
 
-无需任何配置，安装即用：
+默认无需任何配置，安装即用。唯一可选配置是「用户发来的图片怎么处理」：
+
+```yaml
+# profile 的 cordis.patch.yml（按插件 id 覆盖）
+- id: dsh-plugin-image-tools
+  config:
+    userImages: auto # auto（默认）| always | native
+```
+
+| 值 | 行为 |
+|---|---|
+| `auto`（默认） | 模型声明了 image 输入 → 图片块原样保留（原图进模型、气泡走官方附件样式、可点开放大）；没有声明 → 重写为文本占位符，交给 `save_received_images` |
+| `offload` | 看不到图的模型改为走核心的 `image/offload` 决策：**消息内容一字不动**，气泡保持官方附件样式，只有请求投影把图片块换成占位文本（含完整 attachmentId）；模型能看图则完全不碰 |
+| `always` | 无条件重写（0.7.1 及更早的行为），任何模型都看不到原图 |
+| `native` | 从不重写，也不打模型能力补丁：用户图片完全交回核心（纯文本模型发送时会被核心以 `MODEL_DOES_NOT_SUPPORT_IMAGES` 拒绝） |
+
+其余零配置：
 
 - 不读取环境变量，不需要 API Key / token，不写配置文件；
 - 图片来源三种形态（本地路径 / http(s) URL / base64 data URI）直接可用，无白名单配置；
