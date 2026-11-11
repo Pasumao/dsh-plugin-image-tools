@@ -1,20 +1,9 @@
 # Changelog
 
-## [0.7.3] - 2026-11-07
+## [0.7.3] - 2026-11-11
 
-- 新增：`userImages: 'offload'`——**完全不改消息内容**的可选模式。看不到图的模型改为让核心按
-  官方 `image/offload` 决策投影（`session.append('image/offload', { targets })`，与
-  `@deepseek-ai/dsh-compaction-image-offload` 同一条路）：消息事件与气泡样式不变，气泡里仍是
-  官方的附件缩略图，只有请求投影把图片块换成核心的占位文本（`offloadedImageText`，含完整
-  attachmentId，`save_received_images` 可直接用）。
-  - 为什么不直接把消息里的图片块标成 `offloaded: true`：核心的会话格式校验对图片块只放行
-    `{ type, attachment }` 两个键（`assertReleasedV0Keys(block, ['type','attachment'])`），
-    多出的字段一旦随消息落盘，会话会读取失败。标记只能由核心在请求投影阶段生成。
-  - 写入失败（旧核心、拿不到 `session`）或无 session 时自动回退到文本重写，盲模型收图不退化。
-- 测试：selfcheck 34 项（新增 `offloadUserImages` / `recordMessageImageRefs` / `hasLiveImageBlocks` 用例）；
-  `smoke-server` 增加 offload 模式断言（不改消息 / targets 形态 / 已投影不重复追加 / 无 session 回退）。
-
-## [0.7.2] - 2026-11-07
+> 原计划的 0.7.2（userImages auto/native/always）与 0.7.3（offload）两批改动同属 PR #3
+> （2026-11-07 合入），合并为一次发布；0.7.2 跳号未占用。
 
 - 新增：**用户发来的图片不再一律被重写**。`agent/pre-step` 的重写改为按当前步骤的模型
   能力决定（新配置 `userImages`，默认 `auto`）：模型自己声明了 `image` 输入时图片块
@@ -29,9 +18,19 @@
   - 原因：0.4.0 起「盲模型收图」的重写是无条件的，连声明了 image 输入的模型也拿不到原图，
     视觉模型用户必须先停用插件才能看原生图（Issue #1 第 3 条）。重写只为解决
     `UNSUPPORTED_CONTENT`，对能看图的模型来说是纯副作用。
-- 测试：`selfcheck` 增加 `normalizeUserImagesMode` / `acceptsImageInput` / `modelSeesImages`
-  用例；`smoke-server` 增加 auto（可视/文本模型两种分支）/ always / native 三组断言
-  （含「native 不打能力补丁」）。
+- 新增：`userImages: 'offload'`——**完全不改消息内容**的可选模式。看不到图的模型改为让核心按
+  官方 `image/offload` 决策投影（`session.append('image/offload', { targets })`，与
+  `@deepseek-ai/dsh-compaction-image-offload` 同一条路）：消息事件与气泡样式不变，气泡里仍是
+  官方的附件缩略图，只有请求投影把图片块换成核心的占位文本（`offloadedImageText`，含完整
+  attachmentId，`save_received_images` 可直接用）。
+  - 为什么不直接把消息里的图片块标成 `offloaded: true`：核心的会话格式校验对图片块只放行
+    `{ type, attachment }` 两个键（`assertReleasedV0Keys(block, ['type','attachment'])`），
+    多出的字段一旦随消息落盘，会话会读取失败。标记只能由核心在请求投影阶段生成。
+  - 写入失败（旧核心、拿不到 `session`）或无 session 时自动回退到文本重写，盲模型收图不退化。
+- 测试：selfcheck 34 项（新增 `normalizeUserImagesMode` / `acceptsImageInput` / `modelSeesImages` /
+  `offloadUserImages` / `recordMessageImageRefs` / `hasLiveImageBlocks` 用例）；`smoke-server` 增加
+  auto（可视/文本模型两种分支）/ always / native（含「native 不打能力补丁」）/ offload 四组断言
+  （不改消息 / targets 形态 / 已投影不重复追加 / 无 session 回退）。
 
 ## [0.7.1] - 2026-10-19
 
